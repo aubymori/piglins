@@ -13,8 +13,7 @@ Plugins for [Aliucord](https://aliucord.com/), the discord client mod for v126.1
 Adds the silent messages icon from DiscordRN
 
  <b> Credits </b>
-<br>
 
-    @secp192k1[https://github.com/secp192k1] for providing Silent Icon, testing and idea
-    @rushiiMachine[https://github.com/rushiiMachine] and his plugin repo
-    @Ushie[https://github.com/Ushie] for inspiration and drawable loading logic
+- [@secp192k1](https://github.com/secp192k1) for providing Silent Icon, testing and idea
+- [@rushiiMachine](https://github.com/rushiiMachine) and his plugin repo
+- [@Ushie](https://github.com/Ushie) for inspiration and drawable loading logic
