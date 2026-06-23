@@ -1,6 +1,5 @@
 package com.github.importantamigo
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.view.View
 import android.view.ViewGroup
@@ -10,22 +9,23 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import com.aliucord.Utils
 import com.aliucord.annotations.AliucordPlugin
 import com.aliucord.entities.Plugin
+import com.aliucord.patcher.Hook
 import com.aliucord.patcher.after
 import com.aliucord.utils.DimenUtils
-import com.aliucord.utils.ReflectUtils
-import com.github.importantamigo.ui.SilentIconResource
+import com.discord.models.message.Message
 import com.discord.widgets.chat.list.adapter.WidgetChatListAdapterItemMessage
 import com.discord.widgets.chat.list.entries.ChatListEntry
 import com.discord.widgets.chat.list.entries.MessageEntry
+import com.discord.widgets.chat.list.model.WidgetChatListModelMessages
+import com.github.importantamigo.ui.SilentIconResource
 
 @AliucordPlugin
-@SuppressLint("SetTextI18n")
 class SilentIcon : Plugin() {
     private val silentFlag = 4096L
     private val silentIconId = View.generateViewId()
     private lateinit var silentIconResource: SilentIconResource
 
-    val sizePx by lazy { DimenUtils.dpToPx(14) }
+    private val sizePx by lazy { DimenUtils.dpToPx(14) }
     private val marginPx by lazy { DimenUtils.dpToPx(4) }
 
     override fun load(context: Context) {
@@ -37,29 +37,35 @@ class SilentIcon : Plugin() {
         val headerId = Utils.getResId("chat_list_adapter_item_text_header", "id")
 
         patcher.patch(
-            MessageEntry::class.java,
-            "getType",
-            emptyArray(),
-            com.aliucord.patcher.Hook { param ->
+            WidgetChatListModelMessages.Companion::class.java,
+            "shouldConcatMessage",
+            arrayOf(
+                Class.forName("com.discord.widgets.chat.list.model.WidgetChatListModelMessages\$Items"),
+                Message::class.java,
+                Message::class.java,
+            ),
+            Hook { param ->
                 try {
-                    val entry = param.thisObject as? MessageEntry ?: return@Hook
-                    val message = entry.message ?: return@Hook
+                    val message = param.args[1] as? Message ?: return@Hook
+                    val previousMessage = param.args[2] as? Message ?: return@Hook
+
                     val isSilent = ((message.flags ?: 0L) and silentFlag) != 0L
+                    val prevIsSilent = ((previousMessage.flags ?: 0L) and silentFlag) != 0L
 
-                    if (isSilent) {
-                        val prevEntry = ReflectUtils.getField(entry, "prevEntry") as? MessageEntry
-                        val prevIsSilent = (prevEntry?.message?.flags ?: 0L) and silentFlag != 0L
+                    if (!prevIsSilent && isSilent) {
+                        param.result = false
 
-                        if (prevIsSilent) { return@Hook } else { param.result = 0 }
                     }
-                } catch (_: Throwable) { }
-            }
+                } catch (e: Throwable) {
+                    logger.error("SilentIcon shouldConcat error", e)
+                }
+            },
         )
 
         patcher.after<WidgetChatListAdapterItemMessage>(
             "onConfigure",
             Int::class.java,
-            ChatListEntry::class.java
+            ChatListEntry::class.java,
         ) { param ->
             try {
                 val entry = param.args[1] as? MessageEntry ?: return@after
@@ -69,8 +75,7 @@ class SilentIcon : Plugin() {
 
                 val itemView = this.itemView
                 val headerView = itemView.findViewById<ConstraintLayout>(headerId) ?: return@after
-                val timestampView = (ReflectUtils.getField(this, "itemTimestamp") as? TextView)
-                    ?: itemView.findViewById<TextView>(timestampId) ?: return@after
+                val timestampView = itemView.findViewById<TextView>(timestampId) ?: return@after
 
                 val existingIcon = headerView.findViewById<ImageView>(silentIconId)
                 if (existingIcon != null) {

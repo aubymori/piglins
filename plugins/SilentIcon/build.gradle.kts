@@ -1,10 +1,10 @@
-version = "1.0.0" // Plugin version. Increment this to trigger an update
-description = "Adds the silent message icon to silent messages" // Plugin description that will be shown to user
+version = "1.0.1"
+description = "Adds the silent message icon to silent messages"
 
 aliucord {
     changelog.set(
         """
-        # 1.0.0
+        # 1.0.1
         * Initial plugin release
         """.trimIndent(),
     )
