@@ -36,7 +36,7 @@ class TenorAPIFix : Plugin() {
 
     private data class TenorResult(
         val id: String,
-        val itemURL: String?,
+        val itemurl: String?,
         val media: List<Map<String, TenorMedia>>?
     )
 
@@ -113,7 +113,7 @@ class TenorAPIFix : Plugin() {
             val gif = media["gif"]
 
             val gifImageUrl = tinygif?.url ?: gif?.url ?: return@mapNotNull null
-            val tenorGifUrl = item.itemURL ?: gif?.url ?: gifImageUrl
+            val tenorGifUrl = item.itemurl ?: gif?.url ?: gifImageUrl
             val width = gif?.dims?.getOrNull(0) ?: tinygif?.dims?.getOrNull(0) ?: 0
             val height = gif?.dims?.getOrNull(1) ?: tinygif?.dims?.getOrNull(1) ?: 0
 
